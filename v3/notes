@@ -1,0 +1,9 @@
+https://stackoverflow.com/questions/33884538/double-encrypting-2048-rsa#comment55533354_33884538
+truth if you're reading this
+hi
+we need to come up with a new protocol, still using 2048 bit RSA and with basically the same procedures
+but with symetric encryption, hashing and RSA for signing NOT encryption
+the database would be largely the same but the message sending process will be slightly different
+read through the current code and see what you think
+if you do end up making a new version of send_message, use nc -l 3623 to test without writing server code
+good night, and godspeed

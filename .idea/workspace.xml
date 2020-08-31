@@ -2,9 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ffd12d0e-1387-4a5d-94ec-bf4ed09ac99f" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/v2/testing/decrypt.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v3/notes" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/decp.py" beforeDir="false" afterPath="$PROJECT_DIR$/v2/decp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/gen_keys.py" beforeDir="false" afterPath="$PROJECT_DIR$/v2/gen_keys.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/keys/public.pem" beforeDir="false" afterPath="$PROJECT_DIR$/v2/keys/public.pem" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/members.db" beforeDir="false" afterPath="$PROJECT_DIR$/v2/members.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/notes.txt" beforeDir="false" afterPath="$PROJECT_DIR$/v2/notes.txt" afterDir="false" />
     </list>
@@ -24,7 +27,9 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectId" id="1gpeuc2lrNRHFl9sOHYIT0WjeFM" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showExcludedFiles" value="true" />
@@ -34,10 +39,14 @@
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/v2/testing" />
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="preferences.fileTypes" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Alec\Desktop\projects\decp\v2\testing" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Alec\Desktop\projects\decp\v2\keys" />
     </key>
@@ -85,6 +94,27 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="decrypt" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="decp" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/v2/testing" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/v2/testing/decrypt.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="gen_keys" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="decp" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -109,6 +139,7 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.decp" />
+        <item itemvalue="Python.decrypt" />
         <item itemvalue="Python.gen_keys" />
         <item itemvalue="Python.bcp" />
       </list>
@@ -127,38 +158,49 @@
     </task>
     <servers />
   </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+  </component>
   <component name="WindowStateProjectService">
-    <state x="1031" y="343" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1598827252064">
+    <state x="1031" y="343" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1598847419540">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1031" y="343" key="#com.intellij.fileTypes.FileTypeChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1598827252064" />
+    <state x="1031" y="343" key="#com.intellij.fileTypes.FileTypeChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1598847419540" />
+    <state x="1010" y="287" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1598847519595">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="1010" y="287" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1598847519595" />
+    <state x="934" y="134" key="CommitChangelistDialog2" timestamp="1598849833525">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="934" y="134" key="CommitChangelistDialog2/0.0.2560.1080@0.0.2560.1080" timestamp="1598849833525" />
     <state x="92" y="92" width="2376" height="896" key="DiffContextDialog" timestamp="1598840806355">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="92" y="92" width="2376" height="896" key="DiffContextDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1598840806355" />
-    <state width="2561" height="302" key="GridCell.Tab.0.bottom" timestamp="1598845307330">
+    <state width="2561" height="302" key="GridCell.Tab.0.bottom" timestamp="1598849100720">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2561" height="302" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1598845307330" />
-    <state width="2561" height="302" key="GridCell.Tab.0.center" timestamp="1598845307330">
+    <state width="2561" height="302" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1598849100720" />
+    <state width="2561" height="302" key="GridCell.Tab.0.center" timestamp="1598849100720">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2561" height="302" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1598845307330" />
-    <state width="2561" height="302" key="GridCell.Tab.0.left" timestamp="1598845307330">
+    <state width="2561" height="302" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1598849100720" />
+    <state width="2561" height="302" key="GridCell.Tab.0.left" timestamp="1598849100720">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2561" height="302" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1598845307330" />
-    <state width="2561" height="302" key="GridCell.Tab.0.right" timestamp="1598845307330">
+    <state width="2561" height="302" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1598849100720" />
+    <state width="2561" height="302" key="GridCell.Tab.0.right" timestamp="1598849100720">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2561" height="302" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1598845307330" />
+    <state width="2561" height="302" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1598849100720" />
     <state x="787" y="184" key="SettingsEditor" timestamp="1598827245418">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="787" y="184" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1598827245418" />
-    <state x="943" y="235" width="672" height="678" key="search.everywhere.popup" timestamp="1598837721690">
+    <state x="943" y="235" width="672" height="678" key="search.everywhere.popup" timestamp="1598848377563">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="943" y="235" width="672" height="678" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1598837721690" />
+    <state x="943" y="235" width="672" height="678" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1598848377563" />
   </component>
 </project>

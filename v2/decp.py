@@ -15,15 +15,14 @@ class decp_node():
         self.c = self.conn.cursor()
 
         # load/generate keys
-        try:
-            self.keys = gen_keys(config["keys_path"])
-        except Exception as er:
-            # exit("[ERR] key loading/generation failed")
+        self.keys = gen_keys(config["keys_path"])
+        if not self.keys:
             quit("[ERR] key loading/generation failed")
 
         # initialize members.db if not already
         # maybe move this to a seperate module?
         self.c.execute("SELECT * FROM members WHERE public_key = ?", (self.keys["pub_key"], ))
+        # not running on key regeneration
         if len(self.select_result()) == 0:
             self.c.execute("INSERT INTO members (public_key, nick) VALUES (?, ?)", (self.keys["pub_key"], config["nick"]))
             self.conn.commit()
@@ -43,7 +42,7 @@ class decp_node():
 
     def send_message(self, message):
         for member in self.members:
-            c_pub_key = member['public_key']
+            c_pub_key = member["public_key"]
             # write socket wrapper
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.c.execute("SELECT ip FROM ips WHERE member_id = ?", (member["id"], ))
@@ -56,9 +55,20 @@ class decp_node():
                 }
             )
             enc_message = rsa.encrypt(dump.encode("utf-8"), rsa.PublicKey.load_pkcs1(c_pub_key))
+
+            # not matching?
+            # print(c_pub_key)
+            # print(self.keys["pub_key"])
+
             # https://stackoverflow.com/questions/49677614/overflow-exception-when-encrypting-message-with-python-rsa
-            # crlf fucking with the key?
+            # https://stackoverflow.com/questions/33884538/double-encrypting-2048-rsa
+            # crlf fucking with the key? NOPE
+            # need to encrypt with sub value of private key, weird API?
             enc_message = rsa.encrypt(enc_message, self.keys["priv_key_b"])
+
+            # enc_message = rsa.encrypt(message.encode("utf-8"), self.keys["priv_key_b"])
+
+
             for ip in ips:
                 s.connect((ip["ip"], 3623))
                 s.send(enc_message)

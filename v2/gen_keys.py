@@ -11,9 +11,14 @@ def gen_keys(keys_path):
 
     if not os.path.exists(keys_path):
         # delete keys to regenerate
+
+        # IMPORTANT, keys are different lengths?
+
         if input(f"no key directory detected, generate keys at {os.getcwd()}/keys? (y/n)\n").lower() == "y":
             print("[OK] generating keys... this may take a while")
             (pub_key, priv_key) = rsa.newkeys(2048)
+            print(pub_key)
+            print(priv_key)
 
             os.mkdir(keys_path)
 
