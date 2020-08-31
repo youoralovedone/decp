@@ -1,0 +1,20 @@
+alternate join in which members.db is publicly available and unrecognized public keys are prompted to be added to db?
+port 3623
+
+
+if not os.path.exists(keys_path):
+    # delete keys to regenerate
+    (self.pub_key, self.priv_key) = rsa.newkeys(2048, poolsize=8)
+
+    with open(keys_path + "private.pem", "w") as private_pem:
+        private_pem.write(self.priv_key.save_pkcs1("PEM").decode("utf-8"))
+    with open(keys_path + "public.pem", "w") as public_pem:
+        public_pem.write(self.pub_key.save_pkcs1("PEM").decode("utf-8"))
+
+with open(keys_path + "private.pem", mode="rb") as private_pem:
+    self.priv_key = rsa.PrivateKey.load_pkcs1(private_pem.read())
+with open(keys_path + "public.pem", mode="rb") as public_pem:
+    self.pub_key = rsa.PublicKey.load_pkcs1(public_pem.read())
+
+
+use nc -l  to test sending before implementing recieving

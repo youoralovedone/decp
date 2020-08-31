@@ -1,0 +1,15 @@
+{
+    "request": "<request>",
+    "<info>": "<info>"
+}
+
+example: join
+{
+    "request": "JOIN",
+    "public_key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDPd89DjCSjx1MjtSqY6pdWVBKoH22k8E7+F8EEIf9I8haGgvCdleUKiFkDsNPJyebEYAxKjD92oCksYaJygiSCdBKO/MHB/RWVbfO/HoTXCtE6lsdVhS4DTWLalWttq1NgV0VWeK6Uur5OZ3QVFpj8riQQu1y1y81AATdWTagF8wIDAQAB",
+    "nick": "alice",
+    "ips": [
+        "99.76.226.255"
+        "99.76.226.251"
+    ]
+}
