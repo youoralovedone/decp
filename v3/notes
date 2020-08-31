@@ -6,4 +6,8 @@ but with symetric encryption, hashing and RSA for signing NOT encryption
 the database would be largely the same but the message sending process will be slightly different
 read through the current code and see what you think
 if you do end up making a new version of send_message, use nc -l 3623 to test without writing server code
+
+
+if you could write a wrappr for the sqlite3 libary that automatically calls commit() after each execute call and
+returns dictionary when db.execute is called so i dont have to call fucking fetchall every time ill gargle your piss
 good night, and godspeed

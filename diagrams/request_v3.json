@@ -1,0 +1,7 @@
+{
+  "request": "MSG",
+  "message": "<message encrypted with key>",
+  "member_id": "<id of sender>",
+  "key": "<key used to encrypted message, encrypted with recipient public key>",
+  "signature": "hash of message, encrypted with sender private key"
+}
