@@ -1,7 +1,7 @@
 CREATE TABLE members (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    public_key TEXT,
-    nick TEXT
+    public_key TEXT UNIQUE,
+    nick TEXT UNIQUE
 );
 CREATE TABLE ips (
     member_id INTEGER,

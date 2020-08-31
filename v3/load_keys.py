@@ -1,5 +1,6 @@
 import os
 import rsa
+from v3.load_db import sqlite3_wrapper
 
 
 def load_keys():
@@ -8,10 +9,13 @@ def load_keys():
     priv_path = os.path.join(cwd, "keys", "private.pem")
     pub_path = os.path.join(cwd, "keys", "public.pem")
 
-    # generate keys if keys directory does not exist, delete keys dir to regenerate keys
+    # generate keys if keys directory does not exist
+    # to regenerate keys: delete keys dir and then delete or update entry in members.db associated with self
+    #   - via nick maybe?
     if not os.path.exists(os.path.join(cwd, "keys")):
         os.mkdir("keys")
 
+        print("generating keys, this may take a while...")
         (pub_key, priv_key) = rsa.newkeys(2048)
 
         with open(pub_path, "w") as pub_file:
@@ -21,8 +25,16 @@ def load_keys():
 
     # load keys as python-rsa types
     with open(pub_path, mode="rb") as pub_file:
-        pub_key = rsa.PrivateKey.load_pkcs1(pub_file.read())
+        pub_key_s = pub_file.read()
+        pub_key = rsa.PublicKey.load_pkcs1(pub_key_s)
     with open(priv_path, mode="rb") as priv_file:
-        priv_key = rsa.PrivateKey.load_pkcs1(priv_file.read())
+        priv_key_s = priv_file.read()
+        priv_key = rsa.PrivateKey.load_pkcs1(priv_key_s)
 
-    return pub_key, priv_key
+    # key_s are keys encoded as strings
+    return {
+        "pub_key_s": pub_key_s,
+        "prv_key_s": priv_key_s,
+        "pub_key": pub_key,
+        "priv_key": priv_key
+    }
