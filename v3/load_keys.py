@@ -34,7 +34,7 @@ def load_keys():
     # key_s are keys encoded as strings
     return {
         "pub_key_s": pub_key_s,
-        "prv_key_s": priv_key_s,
+        "priv_key_s": priv_key_s,
         "pub_key": pub_key,
         "priv_key": priv_key
     }

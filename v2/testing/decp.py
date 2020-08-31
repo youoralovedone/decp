@@ -1,6 +1,8 @@
 import socket
 import json
 import base64
+import threading
+import multiprocessing
 import rsa
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
@@ -14,7 +16,7 @@ class decp_node():
         self.db = sqlite3_wrapper()
         self.keys = load_keys()
 
-        with open("config.json") as config_file:
+        with open("../../v3/config.json") as config_file:
             config = json.loads(config_file.read())
         self.nick = config["nick"]
         self.ips = config["ips"]
@@ -28,6 +30,13 @@ class decp_node():
 
         self.id = self.db.execute("SELECT id FROM members WHERE public_key = ?", self.keys["pub_key_s"])[0]["id"]
         self.members = self.db.execute("SELECT * FROM members")
+
+        # start listening server on port 3623
+        self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_s.bind((socket.gethostname(), 3623))
+        self.server_s.listen(5)
+        self.start_server()
+        # self.server_thread = multiprocessing.Process(target=self.start_server)
 
     def send_message(self, message):
         for member in self.members:
@@ -54,13 +63,46 @@ class decp_node():
                 }
             )
 
+            threads = []
             ips = self.db.execute("SELECT ip FROM ips WHERE member_id = ?", member["id"])
             for ip in ips:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((ip["ip"], 3623))
-                s.send(dump.encode("utf-8"))
-                s.close()
+                thread = threading.Thread(target=self.send_thread, args=(ip, dump, ))
+                threads.append(thread)
+                thread.start()
+
+            for thread in threads:
+                thread.join()
+
+    def start_server(self):
+        while True:
+            (client_s, address) = self.server_s.accept()
+            data = self.recv_all(client_s)
+            print(data)
+
+    # def stop_server(self):
+    #     self.server_s.close()
+    #     self.server_thread.join()
+
+    def recv_all(self, sock):
+        buffer_size = 4096
+        data = b''
+        while True:
+            part = sock.recv(buffer_size)
+            data += part
+            if len(part) < buffer_size:
+                break
+        return data
+
+    # run sockets in threads to prevent blocking
+    def send_thread(self, ip, dump):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect((ip["ip"], 3623))
+            s.send(dump.encode("utf-8"))
+            s.close()
+        except (ConnectionRefusedError, TimeoutError):
+            print("target machine refused connection or connection timed out, check if port 3623 is forwarded")
 
 
 node = decp_node()
-node.send_message("hi")
+node.send_message("testing")
