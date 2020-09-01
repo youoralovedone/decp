@@ -18,6 +18,7 @@ decentralized encrypted communications protocol v1.0
 installation:
 git clone https://github.com/youoralovedone/decp
 cd v1.0/
+cd decp/
 
 running:
 python3 tui.py

@@ -1,0 +1,3 @@
+- add join request
+- in memory queue for IPC
+- test first release

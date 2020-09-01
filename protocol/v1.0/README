@@ -28,7 +28,7 @@ requests:
 
         parameters:
             message -- base64 encoded
-                message encrypted with randomly generated 256 bit AES key
+                message encrypted with randomly generated 256 bit AES key in CBC mode
             member_id -- unencoded
                 unique id of sender
             key -- base64 encoded
