@@ -1,0 +1,55 @@
+▓█████▄ ▓█████  ▄████▄   ██▓███
+▒██▀ ██▌▓█   ▀ ▒██▀ ▀█  ▓██░  ██▒
+░██   █▌▒███   ▒▓█    ▄ ▓██░ ██▓▒
+░▓█▄   ▌▒▓█  ▄ ▒▓▓▄ ▄██▒▒██▄█▓▒ ▒
+░▒████▓ ░▒████▒▒ ▓███▀ ░▒██▒ ░  ░
+ ▒▒▓  ▒ ░░ ▒░ ░░ ░▒ ▒  ░▒▓▒░ ░  ░
+ ░ ▒  ▒  ░ ░  ░  ░  ▒   ░▒ ░
+ ░ ░  ░    ░   ░        ░░
+   ░       ░  ░░ ░
+ ░             ░
+
+DECP - protocol
+--------------------------------------------------------------------
+request structure:
+    requests are formatted as json with the "request" key equal to the request
+    and the rest of the keys are the named parameters of the request
+
+    example:
+        {
+            "request": "<request>",
+            "param_1": "<value>"
+        }
+
+requests:
+    MSG - message:
+        msg requests send messages
+        sent to: every node connected to network
+
+        parameters:
+            message -- base64 encoded
+                message encrypted with randomly generated 256 bit AES key in CBC mode
+            sender_nick -- unencoded
+                unique nick of sender
+            key -- base64 encoded
+                AES key encrypted with recipients public, 2048 bit RSA key
+            iv -- base64 encoded
+                AES initilization vector, unencrypted
+            signature -- base64 encoded
+                SHA-224 hash of message encoded with sender's private key
+
+        example:
+            {
+                "request": "MSG",
+                "message": "O6LT2u4HjEpKSf7rFGiO7g==",
+                "sender_nick": "null",
+                "key": "iYMkyVz8mXSSA538yAZPqoknn5SjXfMmRBZr (shortened lol)",
+                "iv": "tzOrWdRmUKr1TZomqRaI2A==",
+                "signature": "FTYdQ88nh0H8MQRxrcRortGl6XC (also shortened)"
+            }
+
+    JOIN - join:
+
+
+server:
+    listens on tcp port 3623 for incoming requests

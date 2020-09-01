@@ -3,3 +3,8 @@
 - WORKING: test first release
 - fix server socket not closing on exit
 - fix threading issues with message
+- send file request or file transfers in general
+
+
+join request sends info to everyone after receiving member db
+remove autoincrement from member db? use indexed nick as id
