@@ -18,14 +18,14 @@ class decp_node():
         with open("config.json") as config_file:
             config = json.loads(config_file.read())
         self.nick = config["nick"]
-        self.ips = config["ips"]
+        self.self_ips = config["ips"]
 
         # check if members.db is initialized, init it if not
         if len(self.db.execute("SELECT * FROM members WHERE nick = ?", self.nick)) == 0:
             self.db.execute("INSERT INTO members (nick, public_key) VALUES (?, ?)", self.nick, self.keys["pub_key_s"])
 
-            for ip in self.ips:
-                self.db.execute("INSERT INTO ips (nick, ip) VALUES (?, ?)", self.nick, ip)
+            for ip in self.self_ips:
+                self.db.execute("INSERT INTO ips (member_nick, ip) VALUES (?, ?)", self.nick, ip)
 
         self.members = self.db.execute("SELECT * FROM members")
         self.ips = self.db.execute("SELECT * FROM ips")
