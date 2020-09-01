@@ -18,7 +18,9 @@ request structure:
     example:
         {
             "request": "<request>",
-            "param_1": "<value>"
+            "<param name>": "<value>",
+            ...
+            "<param name>": "<value>"
         }
 
 requests:
@@ -27,15 +29,15 @@ requests:
         sent to: every node connected to network
 
         parameters:
-            message -- base64 encoded
+            param name "message" -- value base64 encoded
                 message encrypted with randomly generated 256 bit AES key in CBC mode
-            sender_nick -- unencoded
+            param name "sender_nick" -- value unencoded
                 unique nick of sender
-            key -- base64 encoded
+            param name "key" -- value base64 encoded
                 AES key encrypted with recipients public, 2048 bit RSA key
-            iv -- base64 encoded
+            param name "iv" -- value base64 encoded
                 AES initilization vector, unencrypted
-            signature -- base64 encoded
+            param name "signature" -- value base64 encoded
                 SHA-224 hash of message encoded with sender's private key
 
         example:

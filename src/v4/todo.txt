@@ -5,6 +5,19 @@
 - fix threading issues with message
 - send file request or file transfers in general
 
+- read howto on threaded, non blocking socket server
+    - thread server client handling
+    - thread message sending? timeouts r a problem here
+
+- deletes or updates public key entry on key regeneration
+    - sends join request
+
+
+
+
+- different networks come last
 
 join request sends info to everyone after receiving member db
 remove autoincrement from member db? use indexed nick as id
+
+skips every other connection for some reason?

@@ -1,4 +1,5 @@
 from src.v4.decp_node import decp_node
+import time
 
 
 def main():
@@ -8,6 +9,7 @@ def main():
         if message == "/EXIT":
             node.stop_server()
             break
+
         node.send_message(message)
 
 

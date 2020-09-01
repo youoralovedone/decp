@@ -36,15 +36,6 @@ class decp_node():
             "JOIN": self.handle_join
         }
 
-        # initialize server socket
-        print("initializing listening server...")
-        self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # https://stackoverflow.com/questions/12362542/python-server-only-one-usage-of-each-socket-address-is-normally-permitted
-        self.server_s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server_s.bind((socket.gethostname(), 3623))
-        # queue up to 5 connections before dropping
-        self.server_s.listen(5)
-
         # start listening thread
         self.server_thread = threading.Thread(target=self.start_server)
         self.server_thread.daemon = True
@@ -58,8 +49,8 @@ class decp_node():
             threads.append(thread)
             thread.start()
 
-        # for thread in threads:
-        #     thread.join()
+        for thread in threads:
+            thread.join()
 
     def join(self):
         pass
@@ -88,14 +79,21 @@ class decp_node():
         pass
 
     def start_server(self):
-        print("done!")
         self.server_thread_db = sqlite3_wrapper()
 
+        print("starting listening server in separate thread...")
+        self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_s.bind((socket.gethostname(), 3623))
+        # queue up to 5 connections before dropping
+        self.server_s.listen(5)
+        print("done! listening on port 3623")
+
         while not self.server_stopped:
-            (client_s, address) = self.server_s.accept()
+            client_s, address = self.server_s.accept()
             data = self.recv_all(client_s)
-            client_s.close()
             self.handle_request(data)
+            client_s.close()
 
     def stop_server(self):
         # not closing the socket on forced exit?
@@ -129,17 +127,19 @@ class decp_node():
         for ip in self.ips:
             if ip["member_nick"] != member["nick"]:
                 continue
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                # https://stackoverflow.com/questions/7214553/python-socket-hangs-on-connect
                 s.connect((ip["ip"], 3623))
                 s.send(dump.encode("utf-8"))
+                s.setblocking(0)
                 s.close()
-            except (ConnectionRefusedError, TimeoutError):
+            except (ConnectionRefusedError, TimeoutError) as e:
                 print(f"target machine at {ip['ip']} refused connection, check if port 3623 is forwarded")
 
     def recv_all(self, sock):
         buffer_size = 4096
-        data = b''
+        data = b""
         while True:
             part = sock.recv(buffer_size)
             data += part
