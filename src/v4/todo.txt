@@ -1,3 +1,5 @@
 - add join request
 - in memory queue for IPC
-- test first release
+- WORKING: test first release
+- fix server socket not closing on exit
+- fix threading issues with message
