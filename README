@@ -17,7 +17,7 @@ decentralized encrypted communications protocol v1.0
 
 installation:
 git clone https://github.com/youoralovedone/decp
-cd v1.0/decp/
+cd v1.0/
 
 IMPORTANT: edit config.json with your ip and nick
 
