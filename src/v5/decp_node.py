@@ -6,7 +6,7 @@ import rsa
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
-from src.v5.helpers import sqlite3_wrapper, load_keys
+from src.v5.helpers import sqlite3_wrapper, load_keys, recv_all
 
 
 class decp_node():
@@ -24,7 +24,7 @@ class decp_node():
 
         # db not available in threads, store in dict
         self.members = self.db.execute("SELECT * FROM members")
-        self.members_dict = {member["nick"]: member["public_key"] for member in self.members}
+        # self.members_dict = {member["nick"]: member["public_key"] for member in self.members}
         self.ips = self.db.execute("SELECT * FROM ips")
         self.ips_dict = {}
         for ip in self.ips:
@@ -68,6 +68,8 @@ class decp_node():
         self.handler_dict[request_json.pop("request")](request_json)
 
     def handle_msg(self, request_json):
+        # server_thread_db = sqlite3_wrapper()
+
         key_enc = b64decode(request_json["key"].encode("utf-8"))
         key = rsa.decrypt(key_enc, self.keys["priv_key"])
 
@@ -76,11 +78,12 @@ class decp_node():
         cipher = AES.new(key, AES.MODE_CBC, iv)
         message = unpad(cipher.decrypt(message_enc), AES.block_size).decode("utf-8")
 
-        sender_row = self.members[request_json["sender_nick"]]
+        sender_row = self.db.execute("SELECT * FROM members WHERE nick = ?", request_json["sender_nick"])[0]
         signature = b64decode(request_json["signature"])
         signed = rsa.verify(message.encode("utf-8"), signature, rsa.PublicKey.load_pkcs1(sender_row["public_key"]))
         status = "[signature matches]" if signed else "[WARNING SIGNATURE DOES NOT MATCH]"
         sender_nick = sender_row["nick"]
+        # move this to messages queue
         print(status, sender_nick, ":", message)
 
     def handle_join(self, request_json):
@@ -95,7 +98,7 @@ class decp_node():
             connection_thread.start()
 
     def start_connection_thread(self, client_s):
-        data = self.recv_all(client_s)
+        data = recv_all(client_s)
         self.handle_request(data)
         client_s.close()
 
@@ -139,22 +142,18 @@ class decp_node():
                 s.send(dump.encode("utf-8"))
                 s.close()
             except (ConnectionRefusedError, TimeoutError) as e:
-                print(f"target machine at {ip['ip']} refused connection, check if port 3623 is forwarded")
+                print(f"target machine at {ip} refused connection, check if port 3623 is forwarded")
 
-    def recv_all(self, sock):
-        buffer_size = 4096
-        data = b""
-        while True:
-            part = sock.recv(buffer_size)
-            data += part
-            if not part:
-                break
-        return data
+    def is_ready(self):
+        pass
 
     def init_db(self):
         # check if members.db is initialized, init it if not
-        if len(self.db.execute("SELECT * FROM members WHERE nick = ?", self.nick)) == 0:
+        self_row = self.db.execute("SELECT * FROM members WHERE nick = ?", self.nick)
+        if len(self_row) == 0:
             self.db.execute("INSERT INTO members (nick, public_key) VALUES (?, ?)", self.nick, self.keys["pub_key_s"])
 
             for ip in self.self_ips:
                 self.db.execute("INSERT INTO ips (member_nick, ip) VALUES (?, ?)", self.nick, ip)
+        elif self_row[0]["public_key"] != self.keys["pub_key_s"]:
+            self.db.execute("UPDATE members SET public_key = ? WHERE nick = ?", self.keys["pub_key_s"], self.nick)

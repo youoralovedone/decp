@@ -7,7 +7,7 @@ import sqlite3
 class sqlite3_wrapper():
     def __init__(self):
         # connect to members.db
-        self.conn = sqlite3.connect("members.db")
+        self.conn = sqlite3.connect("members.db", check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.c = self.conn.cursor()
 
@@ -56,3 +56,14 @@ def load_keys():
         "pub_key": pub_key,
         "priv_key": priv_key
     }
+
+
+def recv_all(sock):
+    buffer_size = 4096
+    data = b""
+    while True:
+        part = sock.recv(buffer_size)
+        data += part
+        if not part:
+            break
+    return data
