@@ -57,7 +57,7 @@ requests:
             param name "ips" -- value unencoded
                 list of sender ips
             param name "get_members" -- value unencoded
-                "yes" or "no", if "yes" server response with member list formatted as json
+                "yes" or "no", if "yes" server responds with member list formatted as json
 
         server response: member list formatted as json if allowed, none if not
 

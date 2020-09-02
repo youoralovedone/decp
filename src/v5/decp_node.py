@@ -1,18 +1,19 @@
 import socket
+import os
 import json
 from base64 import b64encode, b64decode
 import threading
+import sqlite3
 import rsa
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
-from src.v5.helpers import sqlite3_wrapper, load_keys, recv_all
 
 
 class decp_node():
     def __init__(self):
         self.db = sqlite3_wrapper()
-        self.keys = load_keys()
+        self.keys = self.load_keys()
 
         # load config
         with open("config.json") as config_file:
@@ -29,6 +30,8 @@ class decp_node():
         }
 
         self.connection_threads = []
+        self.request_queue = []
+        self.message_queue = []
 
         self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # stop OS from preventing same connection twice in a row
@@ -42,6 +45,11 @@ class decp_node():
         self.server_thread.daemon = True
         # self.threads.append(self.server_thread)
         self.server_thread.start()
+
+        # start handler thread
+        self.request_handler_thread = threading.Thread(target=self.start_request_handler_thread)
+        self.request_handler_thread.daemon = True
+        self.request_handler_thread.start()
 
     def send_message(self, message):
         member_threads = []
@@ -59,7 +67,8 @@ class decp_node():
 
     def handle_request(self, request):
         request_json = json.loads(request)
-        self.handler_dict[request_json.pop("request")](request_json)
+        self.request_queue.append(request_json)
+        # self.handler_dict[request_json.pop("request")](request_json)
 
     def handle_msg(self, request_json):
         key_enc = b64decode(request_json["key"].encode("utf-8"))
@@ -73,35 +82,66 @@ class decp_node():
         sender_row = self.db.execute("SELECT * FROM members WHERE nick = ?", request_json["sender_nick"])[0]
         signature = b64decode(request_json["signature"])
         signed = rsa.verify(message.encode("utf-8"), signature, rsa.PublicKey.load_pkcs1(sender_row["public_key"]))
-        status = "[signature matches]" if signed else "[WARNING SIGNATURE DOES NOT MATCH]"
+        # status = "[signature matches]" if signed else "[WARNING SIGNATURE DOES NOT MATCH]"
         sender_nick = sender_row["nick"]
         # move this to messages queue
-        print(status, sender_nick, ":", message)
+        self.message_queue.append(
+            {
+                "signed": signed,
+                "sender_nick": sender_nick,
+                "message": message
+            }
+        )
+        # print(status, sender_nick, ":", message)
+
+    # def get_message_queue(self):
+    #     return self.message_queue
 
     def handle_join(self, request_json):
         pass
 
     def start_server_thread(self):
-        while not self.server_stopped:
+        while True:
             # dispatch client_s in thread
+            if self.server_stopped:
+                break
             client_s, address = self.server_s.accept()
             connection_thread = threading.Thread(target=self.start_connection_thread, args=(client_s, ))
             # working?
             self.connection_threads.append(connection_thread)
             connection_thread.start()
 
+    def start_request_handler_thread(self):
+        while True:
+            if self.server_stopped:
+                break
+            try:
+                request_json = self.request_queue.pop(0)
+                self.handler_dict[request_json.pop("request")](request_json)
+            except IndexError as e:
+                continue
+
+    def stop(self):
+        self.server_stopped = True
+        self.server_s.close()
+
+        for thread in self.connection_threads:
+            thread.join()
+
     def start_connection_thread(self, client_s):
-        data = recv_all(client_s)
+        data = self.recv_all(client_s)
         self.handle_request(data)
         client_s.close()
 
-    def stop(self):
-        self.server_s.close()
-        self.server_stopped = True
-
-        self.server_thread.join()
-        for thread in self.connection_threads:
-            thread.join()
+    def recv_all(self, sock):
+        buffer_size = 4096
+        data = b""
+        while True:
+            part = sock.recv(buffer_size)
+            data += part
+            if not part:
+                break
+        return data
 
     def start_message_thread(self, member, message):
         # encrypt message
@@ -151,3 +191,63 @@ class decp_node():
                 self.db.execute("INSERT INTO ips (member_nick, ip) VALUES (?, ?)", self.nick, ip)
         elif self_row[0]["public_key"] != self.keys["pub_key_s"]:
             self.db.execute("UPDATE members SET public_key = ? WHERE nick = ?", self.keys["pub_key_s"], self.nick)
+
+    def load_keys(self):
+        # keys stored as PEM in keys directory
+        cwd = os.getcwd()
+        priv_path = os.path.join(cwd, "keys", "private.pem")
+        pub_path = os.path.join(cwd, "keys", "public.pem")
+
+        # generate keys if keys directory does not exist
+        # to regenerate keys: delete keys dir and then delete or update entry in members.db associated with self
+        #   - via nick maybe?
+        if not os.path.exists(os.path.join(cwd, "keys")):
+            os.mkdir("keys")
+
+            print("generating keys, this may take a while...")
+            (pub_key, priv_key) = rsa.newkeys(2048)
+
+            with open(pub_path, "w") as pub_file:
+                pub_file.write(pub_key.save_pkcs1("PEM").decode("utf-8"))
+            with open(priv_path, "w") as priv_file:
+                priv_file.write(priv_key.save_pkcs1("PEM").decode("utf-8"))
+
+        # load keys as python-rsa types
+        with open(pub_path, mode="rb") as pub_file:
+            pub_key_s = pub_file.read()
+            pub_key = rsa.PublicKey.load_pkcs1(pub_key_s)
+        with open(priv_path, mode="rb") as priv_file:
+            priv_key_s = priv_file.read()
+            priv_key = rsa.PrivateKey.load_pkcs1(priv_key_s)
+
+        # key_s are keys encoded as strings
+        return {
+            "pub_key_s": pub_key_s,
+            "priv_key_s": priv_key_s,
+            "pub_key": pub_key,
+            "priv_key": priv_key
+        }
+
+
+# member db must be named members.db and located in the same directory as decp.py
+class sqlite3_wrapper():
+    def __init__(self):
+        # connect to members.db
+        self.conn = sqlite3.connect("members.db", check_same_thread=False)
+        self.conn.row_factory = sqlite3.Row
+        self.c = self.conn.cursor()
+        self.lock = threading.Lock()
+
+    def execute(self, query, *argv):
+        self.lock.acquire(True)
+        self.c.execute(query, argv)
+        self.lock.release()
+        self.conn.commit()
+        self.lock.acquire(True)
+        result = self.c.fetchall()
+        self.lock.release()
+        return [dict(row) for row in result]
+
+    def close(self):
+        # close connection to database
+        self.conn.close()

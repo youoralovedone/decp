@@ -1,6 +1,7 @@
 import os
 import rsa
 import sqlite3
+from threading import Lock
 
 
 # member db must be named members.db and located in the same directory as decp.py
@@ -10,9 +11,12 @@ class sqlite3_wrapper():
         self.conn = sqlite3.connect("members.db", check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.c = self.conn.cursor()
+        self.lock = Lock()
 
     def execute(self, query, *argv):
+        self.lock.acquire(True)
         self.c.execute(query, argv)
+        self.lock.release()
         self.conn.commit()
         return [dict(row) for row in self.c.fetchall()]
 
@@ -57,13 +61,3 @@ def load_keys():
         "priv_key": priv_key
     }
 
-
-def recv_all(sock):
-    buffer_size = 4096
-    data = b""
-    while True:
-        part = sock.recv(buffer_size)
-        data += part
-        if not part:
-            break
-    return data

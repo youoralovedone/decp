@@ -9,11 +9,13 @@
 - streamline new user experience?
     - DONE: verify keys in members db
 
-- run listening server in seperate process?
+- run listening server in separate process?
 
 - DONE: need to join threads after sending message
     - DONE: set message socket timeout to 1
 
-- DONE: remmove member dict and self.members
-- set up queue for server requests and seperate function that handles requests in the queue one at a time
-- write structure for join
+- DONE: remove member dict and self.members
+- DONE: set up queue for server requests and separate function that handles requests in the queue one at a time
+- DONE: write structure for join
+
+- look into async instead of a message queue
