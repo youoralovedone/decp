@@ -40,16 +40,6 @@ requests:
             param name "signature" -- value base64 encoded
                 SHA-224 hash of message encoded with sender's private key
 
-        example:
-            {
-                "request": "MSG",
-                "message": "O6LT2u4HjEpKSf7rFGiO7g==",
-                "sender_nick": "null",
-                "key": "iYMkyVz8mXSSA538yAZPqoknn5SjXfMmRBZr (shortened lol)",
-                "iv": "tzOrWdRmUKr1TZomqRaI2A==",
-                "signature": "FTYdQ88nh0H8MQRxrcRortGl6XC (also shortened)"
-            }
-
     JOIN - join:
 
 
