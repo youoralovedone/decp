@@ -1,24 +1,9 @@
-- add join request
-- in memory queue for IPC
-- WORKING: test first release
-- fix server socket not closing on exit
-- fix threading issues with message
-- send file request or file transfers in general
-
-- read howto on threaded, non blocking socket server
-    - thread server client handling
-    - thread message sending? timeouts r a problem here
-
-- deletes or updates public key entry on key regeneration
-    - sends join request
-
-
-- problem with receiving large messages
-    - recv all function
-
-- different networks come last
-
-join request sends info to everyone after receiving member db
-remove autoincrement from member db? use indexed nick as id
-
-skips every other connection for some reason?
+- get it running in powershell
+    - to fix the issue with windows not allowing same connections to same port
+- thread the server as well as the sockets the server dispatches
+    - create self.threads and close() to join every thread so message threads dont buffer forever
+- join request with reply_db option
+- in memory queue for IPC, decpd OR decp module
+    - decp module with messages queue!
+- create helpers.py to store load_keys and load_db and other helper functions
+- streamline new user experience?

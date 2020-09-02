@@ -1,4 +1,4 @@
-from decp_node import decp_node
+from src.v5.decp_node import decp_node
 
 
 def main():
@@ -6,7 +6,7 @@ def main():
     while True:
         message = input()
         if message == "/EXIT":
-            node.stop_server()
+            node.stop()
             break
 
         node.send_message(message)

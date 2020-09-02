@@ -6,8 +6,7 @@ import rsa
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
-from load_keys import load_keys
-from load_db import sqlite3_wrapper
+from src.v5.helpers import sqlite3_wrapper, load_keys
 
 
 class decp_node():
@@ -15,20 +14,24 @@ class decp_node():
         self.db = sqlite3_wrapper()
         self.keys = load_keys()
 
+        # load config
         with open("config.json") as config_file:
             config = json.loads(config_file.read())
         self.nick = config["nick"]
         self.self_ips = config["ips"]
 
-        # check if members.db is initialized, init it if not
-        if len(self.db.execute("SELECT * FROM members WHERE nick = ?", self.nick)) == 0:
-            self.db.execute("INSERT INTO members (nick, public_key) VALUES (?, ?)", self.nick, self.keys["pub_key_s"])
+        self.init_db()
 
-            for ip in self.self_ips:
-                self.db.execute("INSERT INTO ips (member_nick, ip) VALUES (?, ?)", self.nick, ip)
-
+        # db not available in threads, store in dict
         self.members = self.db.execute("SELECT * FROM members")
+        self.members_dict = {member["nick"]: member["public_key"] for member in self.members}
         self.ips = self.db.execute("SELECT * FROM ips")
+        self.ips_dict = {}
+        for ip in self.ips:
+            nick = ip["member_nick"]
+            if nick not in self.ips_dict.keys():
+                self.ips_dict[nick] = []
+            self.ips_dict[nick].append(ip["ip"])
 
         # initialize requests handler dict
         self.handler_dict = {
@@ -36,21 +39,26 @@ class decp_node():
             "JOIN": self.handle_join
         }
 
+        self.threads = []
+
+        self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # stop OS from preventing same connection twice in a row
+        self.server_s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_s.bind((socket.gethostname(), 3623))
+        self.server_s.listen(5)
+
         # start listening thread
-        self.server_thread = threading.Thread(target=self.start_server)
-        self.server_thread.daemon = True
         self.server_stopped = False
+        self.server_thread = threading.Thread(target=self.start_server_thread)
+        self.server_thread.daemon = True
+        self.threads.append(self.server_thread)
         self.server_thread.start()
 
     def send_message(self, message):
-        threads = []
         for member in self.members:
-            thread = threading.Thread(target=self.msg_thread, args=(member, message, ))
-            threads.append(thread)
+            thread = threading.Thread(target=self.start_message_thread, args=(member, message, ))
+            self.threads.append(thread)
             thread.start()
-
-        for thread in threads:
-            thread.join()
 
     def join(self):
         pass
@@ -68,7 +76,7 @@ class decp_node():
         cipher = AES.new(key, AES.MODE_CBC, iv)
         message = unpad(cipher.decrypt(message_enc), AES.block_size).decode("utf-8")
 
-        sender_row = self.server_thread_db.execute("SELECT * FROM members WHERE nick = ?", request_json["sender_nick"])[0]
+        sender_row = self.members[request_json["sender_nick"]]
         signature = b64decode(request_json["signature"])
         signed = rsa.verify(message.encode("utf-8"), signature, rsa.PublicKey.load_pkcs1(sender_row["public_key"]))
         status = "[signature matches]" if signed else "[WARNING SIGNATURE DOES NOT MATCH]"
@@ -78,29 +86,27 @@ class decp_node():
     def handle_join(self, request_json):
         pass
 
-    def start_server(self):
-        self.server_thread_db = sqlite3_wrapper()
-
-        print("starting listening server in separate thread...")
-        self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server_s.bind((socket.gethostname(), 3623))
-        # queue up to 5 connections before dropping
-        self.server_s.listen(5)
-        print("done! listening on port 3623")
-
+    def start_server_thread(self):
         while not self.server_stopped:
+            # dispatch client_s in thread
             client_s, address = self.server_s.accept()
-            data = self.recv_all(client_s)
-            self.handle_request(data)
-            client_s.close()
+            connection_thread = threading.Thread(target=self.start_connection_thread, args=(client_s, ))
+            self.threads.append(connection_thread)
+            connection_thread.start()
 
-    def stop_server(self):
-        # not closing the socket on forced exit?
+    def start_connection_thread(self, client_s):
+        data = self.recv_all(client_s)
+        self.handle_request(data)
+        client_s.close()
+
+    def stop(self):
         self.server_s.close()
         self.server_stopped = True
 
-    def msg_thread(self, member, message):
+        for thread in self.threads:
+            thread.join()
+
+    def start_message_thread(self, member, message):
         # encrypt message
         key = get_random_bytes(32)
         cipher = AES.new(key, AES.MODE_CBC)
@@ -124,15 +130,13 @@ class decp_node():
             }
         )
 
-        for ip in self.ips:
-            if ip["member_nick"] != member["nick"]:
-                continue
+        # equivalant of SELECT * FROM ips WHERE nick = recipient nick
+        reciepient_ips = self.ips_dict[member["nick"]]
+        for ip in reciepient_ips:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                # https://stackoverflow.com/questions/7214553/python-socket-hangs-on-connect
-                s.connect((ip["ip"], 3623))
+                s.connect((ip, 3623))
                 s.send(dump.encode("utf-8"))
-                # s.setblocking(0) #?
                 s.close()
             except (ConnectionRefusedError, TimeoutError) as e:
                 print(f"target machine at {ip['ip']} refused connection, check if port 3623 is forwarded")
@@ -146,3 +150,11 @@ class decp_node():
             if not part:
                 break
         return data
+
+    def init_db(self):
+        # check if members.db is initialized, init it if not
+        if len(self.db.execute("SELECT * FROM members WHERE nick = ?", self.nick)) == 0:
+            self.db.execute("INSERT INTO members (nick, public_key) VALUES (?, ?)", self.nick, self.keys["pub_key_s"])
+
+            for ip in self.self_ips:
+                self.db.execute("INSERT INTO ips (member_nick, ip) VALUES (?, ?)", self.nick, ip)
