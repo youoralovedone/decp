@@ -1,9 +1,19 @@
 - get it running in powershell
     - to fix the issue with windows not allowing same connections to same port
 - thread the server as well as the sockets the server dispatches
-    - create self.threads and close() to join every thread so message threads dont buffer forever
+    - NO: create self.threads and close() to join every thread so message threads dont buffer forever
 - join request with reply_db option
 - in memory queue for IPC, decpd OR decp module
     - decp module with messages queue!
-- create helpers.py to store load_keys and load_db and other helper functions
+- DONE: create helpers.py to store load_keys and load_db and other helper functions
 - streamline new user experience?
+    - DONE: verify keys in members db
+
+- run listening server in seperate process?
+
+- DONE: need to join threads after sending message
+    - DONE: set message socket timeout to 1
+
+- DONE: remmove member dict and self.members
+- set up queue for server requests and seperate function that handles requests in the queue one at a time
+- write structure for join

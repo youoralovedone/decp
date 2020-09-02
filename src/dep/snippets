@@ -1,0 +1,11 @@
+        # # db not available in threads, store in dict
+        # self.members = self.db.execute("SELECT * FROM members")
+        # # self.members_dict = {member["nick"]: member["public_key"] for member in self.members}
+        # self.ips = self.db.execute("SELECT * FROM ips")
+        # self.ips_dict = {}
+        # for ip in self.ips:
+        #     nick = ip["member_nick"]
+        #     if nick not in self.ips_dict.keys():
+        #         self.ips_dict[nick] = []
+        #     self.ips_dict[nick].append(ip["ip"])
+        #

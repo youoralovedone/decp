@@ -22,24 +22,13 @@ class decp_node():
 
         self.init_db()
 
-        # db not available in threads, store in dict
-        self.members = self.db.execute("SELECT * FROM members")
-        # self.members_dict = {member["nick"]: member["public_key"] for member in self.members}
-        self.ips = self.db.execute("SELECT * FROM ips")
-        self.ips_dict = {}
-        for ip in self.ips:
-            nick = ip["member_nick"]
-            if nick not in self.ips_dict.keys():
-                self.ips_dict[nick] = []
-            self.ips_dict[nick].append(ip["ip"])
-
         # initialize requests handler dict
         self.handler_dict = {
             "MSG": self.handle_msg,
             "JOIN": self.handle_join
         }
 
-        self.threads = []
+        self.connection_threads = []
 
         self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # stop OS from preventing same connection twice in a row
@@ -51,14 +40,19 @@ class decp_node():
         self.server_stopped = False
         self.server_thread = threading.Thread(target=self.start_server_thread)
         self.server_thread.daemon = True
-        self.threads.append(self.server_thread)
+        # self.threads.append(self.server_thread)
         self.server_thread.start()
 
     def send_message(self, message):
-        for member in self.members:
+        member_threads = []
+        members = self.db.execute("SELECT * FROM members")
+        for member in members:
             thread = threading.Thread(target=self.start_message_thread, args=(member, message, ))
-            self.threads.append(thread)
+            member_threads.append(thread)
             thread.start()
+
+        for thread in member_threads:
+            thread.join()
 
     def join(self):
         pass
@@ -68,8 +62,6 @@ class decp_node():
         self.handler_dict[request_json.pop("request")](request_json)
 
     def handle_msg(self, request_json):
-        # server_thread_db = sqlite3_wrapper()
-
         key_enc = b64decode(request_json["key"].encode("utf-8"))
         key = rsa.decrypt(key_enc, self.keys["priv_key"])
 
@@ -94,7 +86,8 @@ class decp_node():
             # dispatch client_s in thread
             client_s, address = self.server_s.accept()
             connection_thread = threading.Thread(target=self.start_connection_thread, args=(client_s, ))
-            self.threads.append(connection_thread)
+            # working?
+            self.connection_threads.append(connection_thread)
             connection_thread.start()
 
     def start_connection_thread(self, client_s):
@@ -106,7 +99,8 @@ class decp_node():
         self.server_s.close()
         self.server_stopped = True
 
-        for thread in self.threads:
+        self.server_thread.join()
+        for thread in self.connection_threads:
             thread.join()
 
     def start_message_thread(self, member, message):
@@ -133,16 +127,16 @@ class decp_node():
             }
         )
 
-        # equivalant of SELECT * FROM ips WHERE nick = recipient nick
-        reciepient_ips = self.ips_dict[member["nick"]]
+        reciepient_ips = self.db.execute("SELECT * FROM ips WHERE member_nick = ?", member["nick"])
         for ip in reciepient_ips:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((ip, 3623))
+                s.settimeout(1)
+                s.connect((ip["ip"], 3623))
                 s.send(dump.encode("utf-8"))
                 s.close()
-            except (ConnectionRefusedError, TimeoutError) as e:
-                print(f"target machine at {ip} refused connection, check if port 3623 is forwarded")
+            except (ConnectionRefusedError, socket.timeout) as e:
+                print(f"target machine at {ip['ip']} refused connection, check if port 3623 is forwarded")
 
     def is_ready(self):
         pass

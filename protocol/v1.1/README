@@ -40,8 +40,51 @@ requests:
             param name "signature" -- value base64 encoded
                 SHA-224 hash of message encoded with sender's private key
 
-    JOIN - join:
+        server response: none
 
+    JOIN - join:
+        IMPORTANT: v1.1's join request is completely unencrypted, YOUR PUBLIC KEYS, IPS AND NICKS ARE NOT SECURE IN THIS VERSION
+        join requests asks to join a network
+
+        INITIAL REQUEST
+        initial request sent to: one person in network
+
+        parameters:
+            param name "nick" -- value unencoded
+                unique nick of sender
+            param name "public_key" -- value unencoded
+                public key of sender
+            param name "ips" -- value unencoded
+                list of sender ips
+            param name "get_members" -- value unencoded
+                "yes" or "no", if "yes" server response with member list formatted as json
+
+        server response: member list formatted as json if allowed, none if not
+
+        {
+            "members": [
+                    {
+                        "nick": "<nick>",
+                        "public_key": "<public key>"
+                        "ips": [
+                            "<ip>"
+                        ]
+                    },
+                    ...
+                    {
+                        "nick": "<nick>",
+                        "public_key": "<public key>"
+                        "ips": [
+                            "<ip>"
+                        ]
+                    }
+                ]
+        }
+
+        SECONDARY REQUEST
+        secondary request sent to everyone in network if initial request receives response
+        same request as initial but get_members param set to "no"
+        server response: none
 
 server:
     listens on tcp port 3623 for incoming requests
