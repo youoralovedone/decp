@@ -60,13 +60,28 @@ class decp_node():
         for thread in member_threads:
             thread.join()
 
-    def join(self):
+    def send_join(self, get_members):
+        member_threads = []
+        members = self.db.execute("SELECT * FROM members")
+        for member in members:
+            thread = threading.Thread(target=self.start_message_thread, args=(member, ))
+            member_threads.append(thread)
+            thread.start()
+
+        for thread in member_threads:
+            thread.join()
         pass
+
+    def start_join_thread(self):
+        pass
+
+    # def reply(self):
+    #     # reply to client?
+    #     pass
 
     def handle_request(self, request):
         request_json = json.loads(request)
         self.request_queue.append(request_json)
-        # self.handler_dict[request_json.pop("request")](request_json)
 
     def handle_msg(self, request_json):
         key_enc = b64decode(request_json["key"].encode("utf-8"))
@@ -92,7 +107,34 @@ class decp_node():
         )
 
     def handle_join(self, request_json):
-        pass
+        sender_nick = request_json["nick"]
+        self.db.execute("INSERT INTO members (nick, public_key) VALUES (?, ?)",
+                        sender_nick, request_json["public_key"])
+        for ip in request_json["ips"]:
+            self.db.execute("INSERT INTO ips (nick, ip) VALUES (?, ?)", sender_nick, ip)
+
+        member_dict = {"members": []}
+        for member in self.db.execute("SELECT * FROM members"):
+            member_dict["members"].append({
+                "nick": member["nick"],
+                "public_key": member["public_key"],
+                "ips": [
+                    ip for ip in self.db.execute("SELECT ip FROM ips WHERE member_nick = ?", member["nick"])
+                ]
+            })
+        # very unclean, think about a cleaner fix in v6 OR standardize this as a way of sending replies?
+        return json.dumps(member_dict)
+
+    # def send_join_reply(self, sender_ip, members_json):
+    #     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     s.settimeout(1)
+    #     s.connect((sender_ip, 3623))
+    #     s.send(members_json.encode("utf-8"))
+    #     s.close()
+
+    # def handle_join_reply(self):
+    #     # calls join with get_members param set to no
+    #     pass
 
     def start_server_thread(self):
         # stop OS from preventing same connection twice in a row
@@ -140,8 +182,13 @@ class decp_node():
 
     def start_connection_thread(self, client_s):
         data = self.recv_all(client_s)
-        self.handle_request(data)
-        # client_s.close()
+        response = self.handle_request(data)
+        # self.reply() # reply to socket with data returned from handled function, do not reply if None
+        # SEND REPONSE HERE
+
+
+
+        client_s.close()
 
     def recv_all(self, sock):
         buffer_size = 4096
@@ -151,7 +198,6 @@ class decp_node():
             data += part
             if not part:
                 break
-        sock.close()
         return data
 
     def start_message_thread(self, member, message):

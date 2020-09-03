@@ -1,4 +1,4 @@
-from src.v5.decp_node import decp_node
+from src.v6.decp_node import decp_node
 import threading
 import requests
 

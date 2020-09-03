@@ -8,20 +8,19 @@
 - DONE: create helpers.py to store load_keys and load_db and other helper functions
 - streamline new user experience?
     - DONE: verify keys in members db
-
 - NO: run listening server in separate process?
-
 - DONE: need to join threads after sending message
     - DONE: set message socket timeout to 1
-
 - DONE: remove member dict and self.members
 - DONE: set up queue for server requests and separate function that handles requests in the queue one at a time
 - DONE: write structure for join
-
 - look into async instead of a message queue
-
 - FIX WINDOWS SOCKET ISSUE, WHY DOESNT IT HAPPEN ON TRUTHS COMPOOTER??!!!
 - client_ready()
-
-
+- reply function
+- associate request with socket, reply to socket with result of request
+- up to handle to close not the handler
 - rewrite/cleanup + comments in v6, right now just get join working fucking hell
+
+- RETURN THE RESPONSE IN HANDLE FUNCTIONS
+- allow connection but buffer? OR fuck handling race conditions and just ignore the request queue

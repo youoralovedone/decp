@@ -55,13 +55,14 @@ requests:
             param name "public_key" -- value unencoded
                 public key of sender
             param name "ips" -- value unencoded
-                list of sender ips
+                list of sender ips, first ip must be the IP from which the request was sent
             param name "get_members" -- value unencoded
                 "yes" or "no", if "yes" server responds with member list formatted as json
 
         server response: member list formatted as json if allowed, none if not
 
         {
+            "request": "JOIN_RPLY"
             "members": [
                     {
                         "nick": "<nick>",
