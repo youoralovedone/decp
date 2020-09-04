@@ -30,7 +30,7 @@ class decp_node():
         }
 
         self.connection_threads = []
-        self.request_queue = []
+        # self.request_queue = []
         self.message_queue = []
 
         self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -42,12 +42,18 @@ class decp_node():
         # self.threads.append(self.server_thread)
         self.server_thread.start()
 
-        # start handler thread
-        self.request_handler_thread = threading.Thread(target=self.start_request_handler_thread)
-        # self.request_handler_thread.daemon = True
-        self.request_handler_thread.start()
+        # # start handler thread
+        # self.request_handler_thread = threading.Thread(target=self.start_request_handler_thread)
+        # # self.request_handler_thread.daemon = True
+        # self.request_handler_thread.start()
 
         self.server_ready = False
+
+    def add(self, nick, public_key, ips):
+        # call add while handling join request instead, use in release version
+        self.db.execute("INSERT INTO members (nick, public_key) VALUES (?, ?)", nick, public_key)
+        for ip in ips:
+            self.db.execute("INSERT INTO ips (member_nick, ip) VALUES (?, ?)", nick, ip)
 
     def send_message(self, message):
         member_threads = []
@@ -60,20 +66,97 @@ class decp_node():
         for thread in member_threads:
             thread.join()
 
-    def send_join(self, get_members):
-        member_threads = []
+    def send_join(self, ip, get_members):
+        # member_threads = []
+        # members = self.db.execute("SELECT * FROM members")
+        # for member in members:
+        #     thread = threading.Thread(target=self.start_join_thread, args=(member, get_members, ))
+        #     member_threads.append(thread)
+        #     thread.start()
+        #
+        # for thread in member_threads:
+        #     thread.join()
+        dump = json.dumps(
+            {
+                "nick": self.nick,
+                "public_key": self.keys["public_key_s"],
+                "ips": [
+                    ip for ip in self.self_ips
+                ],
+                "get_members": get_members
+            }
+        )
+
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)
+            s.connect((ip, 3623))
+            s.send(dump.encode("utf-8"))
+            if get_members:
+                response = self.recv_all(s)
+                response_dict = json.loads(response.decode("utf-8"))
+                for r_member in response_dict["members"]:
+                    member_nick = r_member["nick"]
+                    self.add(member_nick, r_member["public_key"], r_member["ips"])
+        except (ConnectionRefusedError, socket.timeout) as e:
+            print(f"target machine at {ip['ip']} refused connection, check if port 3623 is forwarded")
+
         members = self.db.execute("SELECT * FROM members")
         for member in members:
-            thread = threading.Thread(target=self.start_message_thread, args=(member, ))
-            member_threads.append(thread)
-            thread.start()
+            reciepient_ips = self.db.execute("SELECT * FROM ips WHERE member_nick = ?", member["nick"])
+            for r_ip in reciepient_ips:
+                try:
+                    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    # s.settimeout(1)
+                    # s.connect((r_ip, 3623))
+                    # s.send(dump.encode("utf-8"))
+                    self.send_join(r_ip, False)
 
-        for thread in member_threads:
-            thread.join()
-        pass
+                    # self.db.execute("INSERT INTO members (nick, public_key) VALUES (?, ?)",
+                    #                 member_nick, member["public_key"])
+                    # for ip in member["ips"]:
+                    #     self.db.execute("INSERT INTO ips (member_nick, ip) VALUES (?, ?)", member_nick, ip)
+                    #
+                    # s.close()
+                except (ConnectionRefusedError, socket.timeout) as e:
+                    print(f"target machine at {ip['ip']} refused connection, check if port 3623 is forwarded")
 
-    def start_join_thread(self):
-        pass
+    # def start_join_thread(self, member, get_members):
+    #     dump = json.dumps(
+    #         {
+    #             "nick": self.nick,
+    #             "public_key": self.keys["public_key_s"],
+    #             "ips": [
+    #                 ip for ip in self.self_ips
+    #             ],
+    #             "get_members": get_members
+    #         }
+    #     )
+    #
+    #     try:
+    #         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #         s.settimeout(1)
+    #         s.connect((ip["ip"], 3623))
+    #         s.send(dump.encode("utf-8"))
+    #         if get_members:
+    #             response = self.recv_all(s)
+    #             response_dict = json.loads(response.decode("utf-8"))
+    #             for r_member in response_dict["members"]:
+    #                 member_nick = r_member["nick"]
+    #                 self.add(member_nick, r_member["public_key"], r_member["ips"])
+    #
+    #     reciepient_ips = self.db.execute("SELECT * FROM ips WHERE member_nick = ?", member["nick"])
+    #     for ip in reciepient_ips:
+    #         try:
+    #
+    #                     # self.db.execute("INSERT INTO members (nick, public_key) VALUES (?, ?)",
+    #                     #                 member_nick, member["public_key"])
+    #                     # for ip in member["ips"]:
+    #                     #     self.db.execute("INSERT INTO ips (member_nick, ip) VALUES (?, ?)", member_nick, ip)
+    #
+    #             s.close()
+    #         except (ConnectionRefusedError, socket.timeout) as e:
+    #             print(f"target machine at {ip['ip']} refused connection, check if port 3623 is forwarded")
 
     # def reply(self):
     #     # reply to client?
@@ -81,7 +164,8 @@ class decp_node():
 
     def handle_request(self, request):
         request_json = json.loads(request)
-        self.request_queue.append(request_json)
+        return self.handler_dict[request_json.pop("request")](request_json)
+        # self.request_queue.append(request_json)
 
     def handle_msg(self, request_json):
         key_enc = b64decode(request_json["key"].encode("utf-8"))
@@ -113,17 +197,18 @@ class decp_node():
         for ip in request_json["ips"]:
             self.db.execute("INSERT INTO ips (nick, ip) VALUES (?, ?)", sender_nick, ip)
 
-        member_dict = {"members": []}
-        for member in self.db.execute("SELECT * FROM members"):
-            member_dict["members"].append({
-                "nick": member["nick"],
-                "public_key": member["public_key"],
-                "ips": [
-                    ip for ip in self.db.execute("SELECT ip FROM ips WHERE member_nick = ?", member["nick"])
-                ]
-            })
-        # very unclean, think about a cleaner fix in v6 OR standardize this as a way of sending replies?
-        return json.dumps(member_dict)
+        if bool(request_json["get_members"]):
+            member_dict = {"members": []}
+            for member in self.db.execute("SELECT * FROM members"):
+                member_dict["members"].append({
+                    "nick": member["nick"],
+                    "public_key": member["public_key"],
+                    "ips": [
+                        ip for ip in self.db.execute("SELECT ip FROM ips WHERE member_nick = ?", member["nick"])
+                    ]
+                })
+            # very unclean, think about a cleaner fix in v6 OR standardize this as a way of sending replies?
+            return json.dumps(member_dict)
 
     # def send_join_reply(self, sender_ip, members_json):
     #     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -158,15 +243,15 @@ class decp_node():
             except OSError as e:
                 pass
 
-    def start_request_handler_thread(self):
-        while True:
-            if self.server_stopped:
-                break
-            try:
-                request_json = self.request_queue.pop(0)
-                self.handler_dict[request_json.pop("request")](request_json)
-            except IndexError as e:
-                continue
+    # def start_request_handler_thread(self):
+    #     while True:
+    #         if self.server_stopped:
+    #             break
+    #         try:
+    #             request_json = self.request_queue.pop(0)
+    #             self.handler_dict[request_json.pop("request")](request_json)
+    #         except IndexError as e:
+    #             continue
 
     def stop(self):
         self.server_stopped = True
@@ -176,7 +261,7 @@ class decp_node():
 
         self.server_s.close()
         self.server_thread.join()
-        self.request_handler_thread.join()
+        # self.request_handler_thread.join()
 
         self.db.close()
 
@@ -184,10 +269,8 @@ class decp_node():
         data = self.recv_all(client_s)
         response = self.handle_request(data)
         # self.reply() # reply to socket with data returned from handled function, do not reply if None
-        # SEND REPONSE HERE
-
-
-
+        # send response
+        response and client_s.send(response)
         client_s.close()
 
     def recv_all(self, sock):

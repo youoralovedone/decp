@@ -1,0 +1,32 @@
+same encryption method and json as decp messaging protocol
+keychains stored as CSV
+unique name, public key
+
+client loads csv into database
+client features:
+    - encrypt message
+    - decrypt message
+    - generate keys
+    - add to keychain
+    - remove from keychain
+
+local nickname, public key
+
+
+pastebin for longer messages
+
+
+widely used keychains
+people host their own keychains
+only allow appending to widely used keychains
+
+
+
+
+local keychain with nicks for easier sending
+public key is included in message
+
+symbiotic encryption protocol
+
+
+public key included in message, if public key not in keychain, alert the user

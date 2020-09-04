@@ -24,3 +24,8 @@
 
 - RETURN THE RESPONSE IN HANDLE FUNCTIONS
 - allow connection but buffer? OR fuck handling race conditions and just ignore the request queue
+- add command
+
+
+- PIGGYBACK PROTOCOL with keychain
+- add usage instructions for decp

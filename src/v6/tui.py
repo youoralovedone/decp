@@ -32,6 +32,12 @@ def main():
             node.stop()
             message_thread_stopped = True
             break
+        elif message == "/add":
+            # /add <nick> <public key> <ips comma separated>
+            args = message.split(" ") # move above scope
+            node.add(args[1], args[2], args[3].split(","))
+        elif message == "/join":
+            node.send_join(True)
 
         node.send_message(message)
 
