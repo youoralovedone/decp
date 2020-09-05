@@ -30,3 +30,5 @@ symbiotic encryption protocol
 
 
 public key included in message, if public key not in keychain, alert the user
+try BOF on truth's cpp client
+remote radio thing
